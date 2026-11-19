@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Card Builder</title>
+<style>
+  :root{
+    --bg:#faf8f5;
+    --ink:#3d3730;
+    --muted:#8a8078;
+    --accent:#b08d57;
+    --accent-soft:#e9dfcf;
+    --card:#ffffff;
+    --border:#e8e1d8;
+    --rose:#c98a8a;
+    --sage:#8aa393;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:Georgia,'Times New Roman',serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.6;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 20px 80px}
+  header{text-align:center;margin-bottom:40px}
+  header h1{
+    font-size:2.2rem;font-weight:normal;letter-spacing:.12em;text-transform:uppercase;
+  }
+  header p{color:var(--muted);font-style:italic;margin-top:6px}
+  header .rule{
+    width:70px;height:2px;background:var(--accent);margin:16px auto 0;border-radius:2px;
+  }
+
+  section{margin-bottom:48px}
+  .sec-title{
+    font-size:.85rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:6px;
+  }
+  .sec-sub{color:var(--muted);font-size:.95rem;margin-bottom:18px}
+
+  /* Template picker */
+  .templates{display:flex;gap:20px;flex-wrap:wrap}
+  .tpl{
+    flex:1 1 220px;max-width:320px;background:var(--card);
+    border:2px solid var(--border);border-radius:10px;padding:14px;
+    cursor:pointer;text-align:center;transition:.2s;
+  }
+  .tpl:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.08)}
+  .tpl.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .tpl-chip{
+    height:120px;border-radius:6px;margin-bottom:12px;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:4px;overflow:hidden;
+  }
+  .tpl-chip .n{font-size:1.05rem}
+  .tpl-chip .a{font-size:.65rem;letter-spacing:.25em;text-transform:uppercase}
+  .tpl-chip .d{font-size:.55rem;letter-spacing:.15em}
+  .chip-classic{background:#f3ecdf;border:1px solid #7a1f2b;color:#5e1f1f}
+  .chip-classic .a{color:#7a1f2b}
+  .chip-blush{background:linear-gradient(160deg,#fbeee9,#f6dcd8);color:#7c5c5c}
+  .chip-blush .a{color:var(--rose)}
+  .chip-garden{background:linear-gradient(160deg,#eef3ee,#dde9df);color:#4d5f54}
+  .chip-garden .a{color:var(--sage)}
+  .tpl h3{font-size:1rem;font-weight:normal;letter-spacing:.05em}
+  .tpl small{color:var(--muted)}
+
+  /* Form */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;max-width:640px}
+  .form-grid .full{grid-column:1/-1}
+  label{display:block;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:5px}
+  input,textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;
+    background:#fff;font-family:inherit;font-size:1rem;color:var(--ink);
+  }
+  input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{resize:vertical;min-height:70px}
+
+  /* Preview */
+  .preview-stage{
+    display:flex;justify-content:center;padding:10px 0;
+  }
+  .card{
+    width:100%;max-width:480px;padding:56px 44px;text-align:center;
+    box-shadow:0 14px 40px rgba(0,0,0,.12);border-radius:4px;transition:.25s;
+  }
+  .card .eyebrow{font-size:.7rem;letter-spacing:.35em;text-transform:uppercase;margin-bottom:18px}
+  .card .names{font-size:2rem;line-height:1.3;margin-bottom:8px}
+  .card .amp{font-size:1.5rem;font-style:italic;margin:4px 0}
+  .card .date-line{font-size:1rem;margin-top:22px;letter-spacing:.08em}
+  .card .time-line{font-size:.9rem;color:inherit;opacity:.75;margin-top:4px}
+  .card .venue{font-size:.95rem;margin-top:16px;line-height:1.5}
+  .card .msg{
+    font-size:.9rem;font-style:italic;margin-top:26px;line-height:1.7;
+    padding-top:20px;
+  }
+  .card .rsvp{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;margin-top:26px;opacity:.7}
+  .card .map-link,.card .cal-link{
+    display:inline-block;margin:14px 6px 0;font-size:.72rem;letter-spacing:.18em;
+    text-transform:uppercase;text-decoration:none;padding:8px 18px;border-radius:20px;
+    border:1px solid currentColor;opacity:.85;
+  }
+  .card .map-link:hover,.card .cal-link:hover{opacity:1}
+  .map-embed{
+    display:block;width:100%;max-width:480px;height:260px;border:1px solid var(--border);
+    border-radius:8px;margin:18px auto 0;box-shadow:0 8px 24px rgba(0,0,0,.08);
+  }
+
+  /* Classic — burgundy & cream, torn-edge design */
+  .card.classic{
+    background:#f3ecdf;color:#4a2323;padding:0;overflow:hidden;position:relative;
+  }
+  .card.classic .c-inner{padding:44px 36px 40px}
+  .card.classic .eyebrow{color:#7a3b3b;font-size:.65rem;letter-spacing:.4em;margin-bottom:14px}
+  .card.classic .names{
+    font-family:'Snell Roundhand','Segoe Script','Brush Script MT',cursive;
+    font-size:2.6rem;line-height:1.25;color:#5e1f1f;
+  }
+  .card.classic .amp{
+    color:#9a5a5a;font-family:Georgia,serif;font-style:normal;font-size:1.2rem;
+  }
+  .card.classic .date-line{
+    letter-spacing:.35em;color:#5e1f1f;font-weight:bold;margin-top:16px;
+  }
+  .card.classic .time-line{color:#8a6a6a;margin-top:6px;opacity:1;letter-spacing:.1em}
+  .card.classic .band{
+    background:#7a1f2b;color:#f3ecdf;margin:26px -36px;padding:24px 36px;
+    position:relative;text-align:center;
+    clip-path:polygon(0 6%,4% 0,10% 5%,17% 1%,24% 6%,32% 0,40% 5%,48% 1%,56% 6%,63% 0,
+      71% 5%,79% 1%,86% 6%,93% 0,100% 5%,100% 94%,95% 100%,88% 95%,81% 100%,
+      73% 95%,65% 100%,57% 95%,49% 100%,41% 95%,33% 100%,25% 95%,17% 100%,
+      10% 95%,4% 100%,0 94%);
+  }
+  .card.classic .band::before{
+    content:"❀";position:absolute;top:8px;left:14px;font-size:1.3rem;color:#e9d8c3;opacity:.7;
+  }
+  .card.classic .band::after{
+    content:"❀";position:absolute;bottom:8px;right:14px;font-size:1.3rem;color:#e9d8c3;opacity:.7;
+  }
+  .card.classic .band .msg{
+    font-style:italic;font-size:.92rem;margin:0;padding:0;border:0;color:#f3ecdf;line-height:1.8;
+  }
+  .card.classic .venue{margin-top:20px;font-size:.95rem;color:#5e3030}
+  .card.classic .map-link,.card.classic .cal-link{
+    background:#7a1f2b;color:#f3ecdf;border:0;margin:12px 6px 0;letter-spacing:.2em;font-size:.65rem;
+  }
+  .card.classic .map-link:hover,.card.classic .cal-link:hover{opacity:.85}
+  .card.classic .rsvp{color:#9a5a5a}
+  .card.classic::before,.card.classic::after{
+    content:"";position:absolute;width:1px;height:0;
+  }
+
+  /* Blush */
+  .card.blush{
+    background:linear-gradient(165deg,#fdf3f0 0%,#f7e2de 100%);
+    color:#6e4f4f;position:relative;overflow:hidden;
+  }
+  .card.blush::before,.card.blush::after{
+    content:"";position:absolute;width:140px;height:140px;border-radius:50%;
+    background:radial-gradient(circle,rgba(201,138,138,.25),transparent 70%);
+  }
+  .card.blush::before{top:-40px;left:-40px}
+  .card.blush::after{bottom:-40px;right:-40px}
+  .card.blush .eyebrow{color:var(--rose)}
+  .card.blush .names{font-style:italic}
+  .card.blush .amp{color:var(--rose)}
+  .card.blush .msg{border-top:1px solid rgba(201,138,138,.4);color:#8a6a6a}
+
+  /* Garden */
+  .card.garden{
+    background:linear-gradient(165deg,#f4f7f2 0%,#e2ebe1 100%);
+    color:#43523f;
+  }
+  .card.garden .eyebrow{color:var(--sage)}
+  .card.garden .names{letter-spacing:.06em}
+  .card.garden .names::before,.card.garden .names::after{content:" ✿ ";font-size:1rem;color:var(--sage)}
+  .card.garden .amp{color:var(--sage)}
+  .card.garden .msg{border-top:1px solid rgba(138,163,147,.5);color:#6b7c67}
+
+  .mono-line{border:0;height:0;border-top:1px solid rgba(0,0,0,.15);width:120px;margin:18px auto}
+
+  @media(max-width:640px){
+    .wrap{padding:24px 14px 60px}
+    header h1{font-size:1.5rem}
+    header p{font-size:.9rem}
+    section{margin-bottom:36px}
+    .sec-title{font-size:.75rem}
+    .sec-sub{font-size:.85rem}
+    .form-grid{grid-template-columns:1fr;gap:12px}
+    .templates{gap:12px}
+    .tpl{flex:1 1 100%;max-width:none;display:flex;align-items:center;gap:14px;text-align:left}
+    .tpl-chip{flex:0 0 110px;height:80px;margin-bottom:0;padding:6px}
+    .tpl-chip .n{font-size:.8rem}
+    .tpl-chip .a{font-size:.5rem;letter-spacing:.15em}
+    .tpl-chip .d{display:none}
+    .card{padding:36px 18px}
+    .card .names{font-size:1.45rem}
+    .card .amp{font-size:1.1rem}
+    .card .date-line,.card .venue{font-size:.9rem}
+    .card .msg{font-size:.85rem;padding-top:14px;margin-top:18px}
+    .card .rsvp{margin-top:18px}
+    .card.classic .c-inner{padding:32px 20px 30px}
+    .card.classic .band{margin:20px -20px;padding:18px 20px}
+    .card.classic .names{font-size:1.9rem}
+    .card.classic .date-line{letter-spacing:.25em;font-size:.85rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Wedding Card Builder</h1>
+    <p>Craft your online invitation in three simple steps</p>
+    <div class="rule"></div>
+  </header>
+
+  <!-- 1. Template Picker -->
+  <section id="templates-section">
+    <div class="sec-title">Step 1 · Choose a Style</div>
+    <p class="sec-sub">Click a template to apply it to your card below.</p>
+    <div class="templates" id="templateList"></div>
+  </section>
+
+  <!-- 2. Wedding Details -->
+  <section id="details-section">
+    <div class="sec-title">Step 2 · Wedding Details</div>
+    <p class="sec-sub">Your card updates instantly as you type.</p>
+    <div class="form-grid">
+      <div>
+        <label for="f-name1">Partner 1 Name</label>
+        <input id="f-name1" type="text" value="Aisyah binti Rahman">
+      </div>
+      <div>
+        <label for="f-name2">Partner 2 Name</label>
+        <input id="f-name2" type="text" value="Daniel Lee Wei Ming">
+      </div>
+      <div>
+        <label for="f-date">Wedding Date</label>
+        <input id="f-date" type="date" value="2026-03-14">
+      </div>
+      <div>
+        <label for="f-time">Wedding Time</label>
+        <input id="f-time" type="time" value="11:00">
+      </div>
+      <div class="full">
+        <label for="f-venue">Venue</label>
+        <input id="f-venue" type="text" value="Grand Ballroom, Hotel Equatorial, Jalan Sultan Ismail, Kuala Lumpur">
+      </div>
+      <div class="full">
+        <label for="f-msg">Short Message</label>
+        <textarea id="f-msg">With joy in our hearts, we invite you to share in our celebration of love. Your presence and blessings would mean the world to us and our families.</textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Live Preview -->
+  <section id="preview-section">
+    <div class="sec-title">Step 3 · Your Invitation</div>
+    <p class="sec-sub">A complete preview of your card with the selected style.</p>
+    <div class="preview-stage">
+      <div class="card classic" id="card">
+        <div class="c-inner">
+        <div class="eyebrow" id="c-eyebrow">The Wedding Celebration of</div>
+        <div class="names" id="c-name1">Aisyah binti Rahman</div>
+        <div class="amp" id="c-amp">&amp;</div>
+        <div class="names" id="c-name2">Daniel Lee Wei Ming</div>
+        <div class="date-line" id="c-date">Saturday, 14 March 2026</div>
+        <div class="time-line" id="c-time">11:00 in the morning</div>        <div class="venue" id="c-venue">Grand Ballroom, Hotel Equatorial,<br>Jalan Sultan Ismail, Kuala Lumpur</div>
+        <a class="map-link" id="c-map-link" href="#" target="_blank" rel="noopener">View on Google Maps</a>
+        <a class="cal-link" id="c-cal-link" href="#" target="_blank" rel="noopener">Add to Google Calendar</a>
+        <div class="band"><div class="msg" id="c-msg">With joy in our hearts, we invite you to share in our celebration of love. Your presence and blessings would mean the world to us and our families.</div></div>
+        <div class="rsvp">We look forward to celebrating with you</div>
+        </div>
+      </div>
+    </div>
+    <iframe class="map-embed" id="c-map-embed" title="Wedding venue map" style="border:0" loading="lazy"></iframe>
+  </section>
+</div>
+
+<script>
+  var TEMPLATES = [
+    { id:'classic', name:'Timeless Classic', desc:'Burgundy & cream, script names',
+      chipClass:'chip-classic', line1:'&', line2:'THE WEDDING OF' },
+    { id:'blush',   name:'Blush Romance',    desc:'Soft rose tones, italic names',
+      chipClass:'chip-blush', line1:'♥', line2:'TOGETHER WITH LOVE' },
+    { id:'garden',  name:'Garden Serenity',  desc:'Sage greens, floral accents',
+      chipClass:'chip-garden', line1:'✿', line2:'A GARDEN UNION' }
+  ];
+
+  var selected = 'classic';
+  var fieldIds = ['f-name1','f-name2','f-date','f-time','f-venue','f-msg'];
+
+  var MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+  function formatDate(value){
+    // value is yyyy-mm-dd from <input type="date">; parse as local date, not UTC
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!m) return value;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    if (isNaN(d.getTime())) return value;
+    return DAYS[d.getDay()] + ', ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  function formatTime(value){
+    // value is HH:MM from <input type="time">
+    var m = /^(\d{1,2}):(\d{2})$/.exec(value);
+    if (!m) return value;
+    var h = +m[1], mins = m[2];
+    var suffix = h < 12 ? 'in the morning' : (h < 18 ? 'in the afternoon' : 'in the evening');
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ':' + mins + ' ' + suffix;
+  }
+
+  function updateCard(){
+    var v = function(id){ return document.getElementById(id).value; };
+    document.getElementById('c-name1').textContent = v('f-name1');
+    document.getElementById('c-name2').textContent = v('f-name2');
+    document.getElementById('c-date').textContent = formatDate(v('f-date'));
+    document.getElementById('c-time').textContent = formatTime(v('f-time'));
+    document.getElementById('c-venue').innerHTML =
+      escapeHtml(v('f-venue')).replace(/\n/g,'<br>');
+    document.getElementById('c-msg').textContent = v('f-msg');
+    var mapQuery = encodeURIComponent(v('f-venue') || 'Kuala Lumpur');
+    document.getElementById('c-map-link').href =
+      'https://www.google.com/maps/search/?api=1&query=' + mapQuery;
+    document.getElementById('c-map-embed').src =
+      'https://maps.google.com/maps?q=' + mapQuery + '&output=embed';
+    document.getElementById('c-cal-link').href = buildCalendarUrl(v('f-date'), v('f-time'), v('f-name1'), v('f-name2'), v('f-venue'));
+  }
+
+  function buildCalendarUrl(dateVal, timeVal, name1, name2, venue){
+    // dateVal: yyyy-mm-dd, timeVal: HH:MM (may be empty)
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateVal);
+    if (!m) return '#';
+    var start = m[1] + m[2] + m[3];
+    var hasTime = /^(\d{1,2}):(\d{2})$/.exec(timeVal);
+    var details = 'Wedding of ' + name1 + ' & ' + name2;
+    var location = venue;
+    if (hasTime){
+      var hh = ('0' + hasTime[1]).slice(-2);
+      start += 'T' + hh + hasTime[2] + '00';
+      // 2-hour celebration window
+      var endH = (+hasTime[1] + 2) % 24;
+      var end = m[1] + m[2] + m[3] + 'T' + ('0' + endH).slice(-2) + hasTime[2] + '00';
+      var dates = start + '/' + end;
+    } else {
+      // all-day event
+      var next = new Date(+m[1], +m[2] - 1, +m[3] + 1);
+      var pad = function(n){ return ('0' + n).slice(-2); };
+      var end = next.getFullYear() + pad(next.getMonth() + 1) + pad(next.getDate());
+      var dates = start + '/' + end;
+    }
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+      '&text=' + encodeURIComponent(details) +
+      '&dates=' + dates +
+      '&location=' + encodeURIComponent(location) +
+      '&details=' + encodeURIComponent(details + '. We look forward to celebrating with you.');
+  }
+
+  function renderTemplates(){
+    var list = document.getElementById('templateList');
+    list.innerHTML = '';
+    TEMPLATES.forEach(function(t){
+      var el = document.createElement('div');
+      el.className = 'tpl' + (t.id === selected ? ' selected' : '');
+      el.innerHTML =
+        '<div class="tpl-chip ' + t.chipClass + '">' +
+          '<div class="a">' + t.line2 + '</div>' +
+          '<div class="n">Aisyah &amp; Daniel</div>' +
+          '<div class="d">14 · 03 · 2026</div>' +
+        '</div>' +
+        '<h3>' + t.name + '</h3>' +
+        '<small>' + t.desc + '</small>';
+      el.addEventListener('click', function(){
+        selected = t.id;
+        applyTemplate();
+        renderTemplates();
+      });
+      list.appendChild(el);
+    });
+  }
+
+  function applyTemplate(){
+    var card = document.getElementById('card');
+    TEMPLATES.forEach(function(t){ card.classList.remove(t.id); });
+    card.classList.add(selected);
+    var t = TEMPLATES.filter(function(x){ return x.id === selected; })[0];
+    document.getElementById('c-eyebrow').textContent = t.line2;
+  }
+
+  function bindFields(){
+    fieldIds.forEach(function(id){
+      document.getElementById(id).addEventListener('input', updateCard);
+    });
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  renderTemplates();
+  bindFields();
+  applyTemplate();
+  updateCard();
+</script>
+</body>
+</html>
